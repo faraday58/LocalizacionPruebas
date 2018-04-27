@@ -7,6 +7,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.os.Build;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -44,8 +45,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         log("Mejor proveedor: " + proveedor + "\n");
         log("Comenzamos con la última localización conocida: ");
 
-        if(validarPermisos())
-        {
+        if (validarPermisos()) {
+
             Location location = manejador.getLastKnownLocation(proveedor);
             muestraLocalizacion(location);
         }
@@ -59,7 +60,24 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     }
 
     private boolean validarPermisos() {
+
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+        {
+            return true;
+        }
+        if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+        {
+            return true;
+        }
+        if( shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) && shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION))
+        {
+                cargarDialogoRecomendacion();
+        }
+
         return false;
+    }
+
+    private void cargarDialogoRecomendacion() {
     }
 
 
