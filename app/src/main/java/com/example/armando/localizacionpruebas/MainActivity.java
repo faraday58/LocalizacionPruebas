@@ -1,6 +1,7 @@
 package com.example.armando.localizacionpruebas;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
@@ -8,7 +9,10 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.Build;
+import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;
@@ -27,7 +31,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private LocationManager manejador;
     private String proveedor;
     private TextView txtvMostrar;
-
+    private int REQUEST_CODE_ACCESO_LOCALIZACION=1;
+    Location location;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,18 +47,18 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         criterio.setAltitudeRequired(false);
         criterio.setAccuracy(Criteria.ACCURACY_FINE);
         proveedor = manejador.getBestProvider(criterio, true);
-        log("Mejor proveedor: " + proveedor + "\n");
-        log("Comenzamos con la última localización conocida: ");
-
         if (validarPermisos()) {
 
-            Location location = manejador.getLastKnownLocation(proveedor);
-            muestraLocalizacion(location);
+            Toast.makeText(MainActivity.this,"Permisos otorgados",Toast.LENGTH_SHORT).show();
         }
         else
         {
             Toast.makeText(this,"Debes otorgar permisos para poder visualizar datos GPS",Toast.LENGTH_LONG).show();
         }
+
+        log("Mejor proveedor: " + proveedor + "\n");
+        log("Comenzamos con la última localización conocida: ");
+
 
 
 
@@ -67,17 +72,53 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         }
         if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)
         {
+            location = manejador.getLastKnownLocation(proveedor);
+            muestraLocalizacion(location);
+
             return true;
         }
         if( shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) && shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION))
         {
                 cargarDialogoRecomendacion();
         }
+        else
+        {
+            requestPermissions(new String [] {Manifest.permission.ACCESS_FINE_LOCATION},REQUEST_CODE_ACCESO_LOCALIZACION);
+        }
+
 
         return false;
     }
 
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if(requestCode == REQUEST_CODE_ACCESO_LOCALIZACION)
+        {
+            if(grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+            {
+                Toast.makeText(MainActivity.this,"Los permisos fueron asignados",Toast.LENGTH_LONG).show();
+            }
+            else
+            {
+                Toast.makeText(MainActivity.this,"No se asignaron los permisos",Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
     private void cargarDialogoRecomendacion() {
+        AlertDialog.Builder dialogo = new AlertDialog.Builder(MainActivity.this);
+        dialogo.setTitle("Permisos desactivados");
+        dialogo.setMessage("Acepte los permisos para el funcionamiento correcto de la aplicaciòn");
+        dialogo.setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.M)
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                requestPermissions(new String [] {Manifest.permission.ACCESS_FINE_LOCATION},REQUEST_CODE_ACCESO_LOCALIZACION);
+            }
+        });
+
+        dialogo.show();
     }
 
 
